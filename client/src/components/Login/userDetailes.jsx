@@ -15,7 +15,6 @@ function useDetails() {
             variant="standard"
           />
         </div>
-         
       </div>
       <div
         style={{
@@ -33,8 +32,7 @@ function useDetails() {
           style={{
             position: "absolute",
             top: "60px",
-
-            marginTop: "30px",
+            marginTop: "80px",
           }}
         >
           <button className="btn btn-primary">Next</button>
