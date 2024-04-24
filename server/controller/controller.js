@@ -1,45 +1,121 @@
 import nodemailer from "nodemailer";
+import Mailgen from "mailgen";
+import { EMAIL, PASSWORD } from "../env.js";
+import UserModel from "../Model/userModel.js";
+import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
 
 export async function register(req, res) {
   try {
-    let testAccount = await nodemailer.createTestAccount();
+    const specialchar = /[!@#$%^&*(),.?":{}|<>]/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const { email, name, password, confirmPassword } = req.body;
+    if (!email) {
+      return res.status(400).send({ error: "Please enter email" });
+    } else if (!emailRegex.test(email)) {
+      return res.status(400).send({ error: "Please enter a valid email" });
+    } else if (!name) {
+      return res.status(400).send({ error: "Please enter first name" });
+    }   
+    const existEmail = await UserModel.findOne({ email });
+    if (existEmail) {
+      return res.status(400).send({ error: "Please use a unique email" });
+    }
 
-    const transporter = nodemailer.createTransport({
-      host: "smtp.ethereal.email",
-      port: 587,
-      secure: false, // Use `true` for port 465, `false` for all other ports
+    if (password) {
+      if (!specialchar.test(password)) {
+        return res.status(400).send({
+          error: "Password should contain atleaset one special charector",
+        });
+      } else if (password.length < 6) {
+        return res
+          .status(400)
+          .send({ error: "Password should be atleast 6 charectors" });
+      }
+      if (password === confirmPassword) {
+        const hashPassword = await bcrypt.hash(password, 10);
+        const user = new UserModel({
+          email,
+          password: hashPassword,
+          name,
+        });
+
+        await user.save();
+
+        return res
+          .status(201)
+          .send({ error: false, msg: "User registered successfully" });
+      } else {
+        return res
+          .status(400)
+          .send({ error: "Password and confirm password are not same" });
+      }
+    } else {
+      return res.status(400).send({ error: "Password is required" });
+    }
+  } catch (error) {
+    res.status(500).send({ error: error.message || "Internal Server Error" });
+  }
+}
+
+export async function sendOTP(req, res) {
+  try {
+    const { userEmail } = req.body;
+
+    // Generate OTP
+    const otp = generateOTP(); // Generate 6-digit OTP
+
+    function generateOTP() {
+      let otp = "";
+      for (let i = 0; i < 4; i++) {
+        otp += Math.floor(Math.random() * 10); // Generate a random number between 0 to 9
+      }
+      return otp;
+    }
+
+    let config = {
+      service: "gmail",
       auth: {
-        user: testAccount.user,
-        pass: testAccount.pass,
+        user: EMAIL, // Replace with your Gmail email
+        pass: PASSWORD, // Replace with your Gmail password
+      },
+    };
+
+    let transporter = nodemailer.createTransport(config);
+
+    let MailGenerator = new Mailgen({
+      theme: "default",
+      product: {
+        name: "Loundry",
+        link: "https://mailgen.js/",
       },
     });
 
-    const message = {
-      from: '"Maddison Foo Koch 👻" <maddison53@ethereal.email>',
-      to: "bar@example.com, baz@example.com",
-      subject: "Hello ✔",
-      text: "Hello world?",
-      html: "<b>Hello world?</b>",
+    let response = {
+      body: {
+        name: "Halloo",
+        intro: `Your OTP is ${otp}`,
+        outro: "Please use this OTP to verify your email.",
+      },
     };
 
-    transporter
-      .sendMail(message)
-      .then((info) => {
-        console.log("Message sent: %s", info.messageId);
-        console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+    let mail = MailGenerator.generate(response);
 
-        return res.status(201).json({
-          msg: "You should receive an email",
-          info: info.messageId,
-          preview: nodemailer.getTestMessageUrl(info),
-        });
-      })
-      .catch((error) => {
-        console.error("Error occurred: ", error);
-        return res.status(500).json({ error });
-      });
+    let message = {
+      from: EMAIL, // Replace with your Gmail email
+      to: userEmail,
+      subject: "OTP Verification",
+      html: mail,
+    };
+
+    await transporter.sendMail(message);
+
+    return res.status(201).json({
+      msg: "OTP has been sent to your email",
+      otp: otp, // Sending the OTP in the response for testing purposes
+    });
   } catch (error) {
     console.error("Error occurred: ", error);
-    return res.status(500).json({ error });
+    return res.status(500).json({ error: "Failed to send OTP" });
   }
 }

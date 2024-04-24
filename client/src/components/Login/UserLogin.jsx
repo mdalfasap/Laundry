@@ -1,7 +1,8 @@
 import React from "react";
 import GroupImage from "../../assets/Frame.png";
 import { Link } from "react-router-dom";
-
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 function UserLogin() {
   return (
     <div className="container">
@@ -53,6 +54,7 @@ function UserLogin() {
           </p>
         </div>
       </div>
+      <ToastContainer position="top-center" />
     </div>
   );
 }
