@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 
 function UserLogin() {
   const [formData, setFormData] = useState({
-    email: "",
+    emailOrNumber: "",
     password: "",
   });
 
@@ -33,7 +33,7 @@ function UserLogin() {
       navigate("/sendOtp");
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Something went wrong!");
+      toast.error("Pleae enter !");
     }
   };
 
@@ -61,7 +61,9 @@ function UserLogin() {
                 <input
                   type="text"
                   placeholder="Enter Email ID or Phone Number"
-                  name="email"
+                  name="emailOrNumber"
+                  id="emailOrNumber"
+                  value={formData.emailOrNumber}
                   onChange={handleChange}
                 />
               </div>

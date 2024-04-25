@@ -8,8 +8,8 @@ import GroupImage from "../../assets/Frame.png";
 
 function Register() {
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
+    emailOrNumber: "",
+    number: "",
     password: "",
     confirmPassword: "",
   });
@@ -38,7 +38,7 @@ function Register() {
         error.response ? error.response.data : error
       );
       toast.error(
-        error.response ? error.response.data.error : "Registration failed"
+        error.response ? error.response.data.error : "please fill this "
       );
     }
   };
@@ -77,8 +77,9 @@ function Register() {
                 <input
                   type="text"
                   placeholder="Enter Email ID or Phone Number"
-                  name="email"
-                  value={formData.email}
+                  id="emailOrNumber"
+                  name="emailOrNumber"
+                  value={formData.emailOrNumber}
                   onChange={handleChange}
                 />
               </div>
