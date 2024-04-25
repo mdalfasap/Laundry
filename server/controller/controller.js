@@ -4,6 +4,7 @@ import { EMAIL, PASSWORD } from "../env.js";
 import UserModel from "../Model/userModel.js";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
+import { error } from "console";
 
 export async function register(req, res) {
   try {
@@ -16,7 +17,7 @@ export async function register(req, res) {
       return res.status(400).send({ error: "Please enter a valid email" });
     } else if (!name) {
       return res.status(400).send({ error: "Please enter first name" });
-    }   
+    }
     const existEmail = await UserModel.findOne({ email });
     if (existEmail) {
       return res.status(400).send({ error: "Please use a unique email" });
@@ -58,9 +59,9 @@ export async function register(req, res) {
   }
 }
 
-export async function sendOTP(req, res) {
+const sendOtp = async (userEmail) => {
   try {
-    const { userEmail } = req.body;
+    // const { userEmail } = req.body;
 
     // Generate OTP
     const otp = generateOTP(); // Generate 6-digit OTP
@@ -86,14 +87,14 @@ export async function sendOTP(req, res) {
     let MailGenerator = new Mailgen({
       theme: "default",
       product: {
-        name: "Loundry",
+        name: "Laundry",
         link: "https://mailgen.js/",
       },
     });
 
     let response = {
       body: {
-        name: "Halloo",
+        name: "Welcome",
         intro: `Your OTP is ${otp}`,
         outro: "Please use this OTP to verify your email.",
       },
@@ -110,12 +111,50 @@ export async function sendOTP(req, res) {
 
     await transporter.sendMail(message);
 
-    return res.status(201).json({
+    return {
       msg: "OTP has been sent to your email",
-      otp: otp, // Sending the OTP in the response for testing purposes
-    });
+      otp: otp,
+    };
   } catch (error) {
     console.error("Error occurred: ", error);
-    return res.status(500).json({ error: "Failed to send OTP" });
+    throw new Error("Failed to send OTP");
+  }
+};
+
+export async function login(req, res) {
+  try {
+    const { email, password } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: "please enter email" });
+    }
+    if (!password) {
+      return res.status(400).json({ error: "please enter password" });
+    }
+
+    const user = await UserModel.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ error:"this email not found" });
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(400).json({ error: "invalid password" });
+    }
+    sendOtp(email);
+
+    return res.status(201).send({ error: false, msg: "otp send" });
+  } catch (error) {}
+}
+
+export async function verifyOtp(req, res) {
+  try {
+    
+
+
+
+
+  } catch (error) {
+    console.error("Error in verifyOtp function:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 }

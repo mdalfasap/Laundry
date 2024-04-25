@@ -1,9 +1,42 @@
-import React from "react";
+import React, { useState } from "react";
+import axios from "axios";
 import GroupImage from "../../assets/Frame.png";
 import { Link } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useNavigate } from "react-router-dom";
+
 function UserLogin() {
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  };
+  const navigate = useNavigate();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post(
+        "http://localhost:8080/api/login",
+        formData
+      );
+
+      console.log(response.data);
+      toast.success(response.data.msg);
+      navigate("/sendOtp");
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Something went wrong!");
+    }
+  };
+
   return (
     <div className="container">
       <div className="row">
@@ -22,35 +55,49 @@ function UserLogin() {
           className="col-md-6"
           style={{ marginTop: "160px", marginLeft: "-80px" }}
         >
-          <div className="inputText">
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <input type="text" placeholder="Enter Email ID or Phone Number" />
+          <form onSubmit={handleSubmit}>
+            <div className="inputText">
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <input
+                  type="text"
+                  placeholder="Enter Email ID or Phone Number"
+                  name="email"
+                  onChange={handleChange}
+                />
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Enter your password"
+                  onChange={handleChange}
+                />
+              </div>
+              <p
+                style={{
+                  color: "#FFFF",
+                  display: "flex",
+                  justifyContent: "flex-end",
+                }}
+              >
+                <Link to="/">Forgot Password?</Link>
+              </p>
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <input type="text" placeholder="Enter your password" />
+              <button type="submit" className="btn btn-primary w-333">
+                Log In
+              </button>
             </div>
-            <p
-              style={{
-                color: "#FFFF",
-                display: "flex",
-                justifyContent: "flex-end",
-              }}
-            >
-              <Link to="/">Forgot Password?</Link>
-            </p>
-          </div>
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>
-            <button className="btn btn-primary w-333">Log In</button>
-          </div>
+          </form>
           <p
             style={{
               marginTop: "10px",
               color: "#FFFF",
               display: "flex",
               justifyContent: "flex-end",
-            }} 
+            }}
           >
-            Already have an account? <Link to="register">Register</Link>
+            Already have an account? <Link to="/register">Register</Link>
           </p>
         </div>
       </div>
